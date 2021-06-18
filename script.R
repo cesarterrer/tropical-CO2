@@ -5,13 +5,21 @@ library(ggplot2)
 library(cowplot)
 make_pct <- function(x) (exp(x) - 1) * 100
 CO2inc <- 616-372
-trop <- read.csv("tropical_review.csv",na.strings=c("",NA))
+data <- read.csv("AGB_effects2019.csv",na.strings=c("",NA))
+data <- data[complete.cases(data$id),]
+data <- data %>% dplyr::rename(Age=Age2,Nyears=nyears)
+levels(data$Biome) <- list("Bo" = "Boreal_Forest","Cr"="Cropland", "Gr"="Grassland", "Sh"="Shrubland",
+                           "Te"="Temperate_Forest","Tr"="Tropical_Forest")
+trop <- filter(data, Biome=="Tropical_Forest") %>% mutate(obs = 1:nrow(.))
+write.csv(trop,"tropical_review.csv")
 
 overall <- rma.mv(yi, vi, data=trop, random = ~ 1 | Site.Name / obs) # overall effect
 (make_pct(coef(summary(overall))[1])*100)/CO2inc
 (make_pct(coef(summary(overall))[2])*100)/CO2inc
 
+rma.mv(yi, vi, mods=~N, data=trop, random = ~ 1 | Site.Name / obs)
 mod <- rma.mv(yi, vi, mods=~N-1, data=trop, random = ~ 1 | Site.Name / obs)
+summary(mod)
 make_pct(coef(summary(mod)))
 
 Nm.n <- trop %>%  group_by(N) %>% summarise(n = n())
@@ -68,7 +76,7 @@ figure <- ggplot(all, aes(x=reorder(id, -mean), y=mean, fill= fill_group, ymin=m
         axis.text.x = element_text(angle = 45, hjust = 1,vjust = 1)
   )
 figure
-save_plot("figures/tropicalCO2.png", figure, dpi=1200, nrow=1, ncol=1, base_height = 6, base_width = 6,type = "cairo-png",bg = "white")
+save_plot("tropicalCO2.png", figure, dpi=1200, nrow=1, ncol=1, base_height = 6, base_width = 6,type = "cairo-png",bg = "white")
 
 ##################### Whittaker's Biomes #############################################
 #devtools::install_github("valentinitnelav/plotbiomes")
@@ -84,9 +92,8 @@ library(rcartocolor)
 make_pct <- function(x) (exp(x) - 1) * 100
 
 effects <- read.csv("~/OneDrive - LLNL/FACEreview/data/AGB_effects2019.csv",na.strings=c("",NA)) %>%
-  #dplyr::filter(!is.na(CNr),!is.na(PamountBray09_new)) %>%
   dplyr::rename(Age=Age2, Duration=nyears, Fertilized=N) %>% mutate(Fertilized=recode_factor(Fertilized,Nhigh="Yes",Nlow="No"), new_id = paste(Site.Name,Fertilized)) %>%
-  dplyr::select(new_id,Age,Duration,Fertilized,MAT,MAP2) %>% distinct() %>% mutate(X = 1:n())
+  dplyr::select(new_id,Age,Duration,Fertilized,MAT,MAP2, Biome) %>% distinct() %>% mutate(X = 1:n())
 
 my_outliers <- get_outliers(tp = dplyr::select(effects, MAT,MAP2)%>%mutate(MAP2=MAP2*0.1)) # Outliers
 effects$status <- ifelse(effects$X %in% my_outliers$row_idx, "out", "in")
@@ -99,12 +106,9 @@ biomes <- ggplot() + geom_polygon(data = Whittaker_biomes,aes(x = temp_c, y = pr
                     values = Ricklefs_colors) +
   geom_point(data=effects,
              #data = dplyr::filter(effects, status=="in"), 
-             aes(x = MAT, y = MAP2, size=Age, alpha=Duration, col=Fertilized), 
-             #size   = 3,
+             aes(x = jitter(MAT,100), y = jitter(MAP2,100), size=Age, alpha=Duration, col=Fertilized),
              shape  = 21,
-             #colour = "gray95", 
              fill   = "black",
-             #alpha  = 0.5
              stroke = 1) +
   #geom_label_repel(data=effects,aes(x = MAT, y = MAP2, label=SITE), 
   #                               colour = "red", size = 2, nudge_x=-100, nudge_y=1000) +
@@ -128,6 +132,6 @@ biomes <- ggplot() + geom_polygon(data = Whittaker_biomes,aes(x = temp_c, y = pr
         legend.key.width = unit(.3, "cm"), legend.key.height = unit(0.3, "cm"),
   )
 biomes
-save_plot("figures/biomes.png", biomes, dpi=1200, nrow=1, ncol=1, base_height = 4, base_width = 4,type = "cairo-png")
+save_plot("biomes.png", biomes, dpi=1200, nrow=1, ncol=1, base_height = 4, base_width = 4,type = "cairo-png")
 
 
