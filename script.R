@@ -49,34 +49,48 @@ fleischer <- read.csv("biomass_per_change_original.csv") %>%
                                 se=sd(CBIO100)/sqrt(n()))
 
 ###### ALL ######
-all<- data.frame(id=c("CMIP6 - C", "CMIP6 - CN", "Experiments - NOFERT", "Experiments - FERT", 
-                      "Experiments - Upscaled", "Process models - C", "Process models - CN", "Process models - CNP"), 
-                 mean=c(cmip$mean[1], cmip$mean[2], expNlow.mean,expNhigh.mean, terrer.mean,
+all<- data.frame(id=c("CMIP6 - C", "CMIP6 - CN", "CMIP6 - CNP", "Experiments - NOFERT", "Experiments - FERT", 
+                      "Experiments - Upscaled", "Biosphere models - C", "Biosphere models - CN", "Biosphere models - CNP"), 
+                 mean=c(cmip$mean[1], cmip$mean[2], cmip$mean[3], expNlow.mean,expNhigh.mean, terrer.mean,
                         fleischer$mean[1], fleischer$mean[2], fleischer$mean[3]),
-                 se=c(cmip$se[1], cmip$se[2], expNlow.se, expNhigh.se, terrer.se,
+                 se=c(cmip$se[1], cmip$se[2], cmip$se[3], expNlow.se, expNhigh.se, terrer.se,
                       fleischer$se[1],fleischer$se[2],fleischer$se[3]),
-                 fill_group=c("mechanistic","mechanistic","observational","observational","observational", "mechanistic", "mechanistic", "mechanistic"),
-                 facet_group=c(rep("CMIP6 models",2), rep("Experiments",3),rep("Process models",3)),
-                 color_group=as.factor(c("C","CN","meta-analysis","meta-analysis","CNP","C","CN","CNP")))
+                 fill_group=c("mechanistic","mechanistic","mechanistic","observational","observational","observational", "mechanistic", "mechanistic", "mechanistic"),
+                 fill_group2=as.factor(c("C models / Fertilizer","CN models","CNP models / No Fertilizer","CNP models / No Fertilizer",
+                                         "C models / Fertilizer", "Upscaled","C models / Fertilizer","CN models","CNP models / No Fertilizer")),
+                 facet_group=factor(c(rep("CMIP6 models",3), rep("Experiments",3),rep("Biosphere models",3)), levels = c("CMIP6 models", "Experiments", "Biosphere models")),
+                 color_group=as.factor(c("C","CN","CNP","meta-analysis","meta-analysis","CNP","C","CN","CNP")))
 write.csv(all,"tropical_meta.csv")
-figure <- ggplot(all, aes(x=reorder(id, -mean), y=mean, fill= fill_group, ymin=mean-se, ymax=mean+se)) + 
+
+figure <- ggplot(all, aes(x=reorder(id, -mean), y=mean, fill= fill_group2, ymin=mean-se, ymax=mean+se)) + 
   geom_errorbar(size=.2,width=.3) + 
   #scale_y_continuous(expand = c(0, 0), limits=c(0,31)) +
-  geom_col(width=.55, size=1, aes(col=color_group)) +
+  geom_col(width=.55, color="black") +
   xlab(NULL) + ylab (expression(paste("Biomass ", beta, " (% 100 ", ppm^-1,")", sep=" "))) +
-  scale_fill_manual(values = c("#5B8EC1","#EBB851"), name="") +
-  scale_color_manual(values=c("#ffab40", "#ffd100","#6cc24a", "black"), name="") +
+  scale_fill_manual(values=c("#999999", "#009E73","#0072B2","#56B4E9", "black"), name="") +
+  #scale_color_manual(values=c("#ffab40", "#ffd100","#6cc24a", "black"), name="") +
   guides(color = guide_legend(override.aes = list(fill = "transparent"))) +
-  facet_wrap(.~facet_group, scales="free_x") +
-  theme_cowplot(font_size=12) + panel_border() +
-  theme(strip.background = element_blank(),
-        legend.position = c(1, 1), 
-        legend.justification = c(1, 1),
-        axis.ticks.y=element_blank(),
-        axis.text.x = element_text(angle = 45, hjust = 1,vjust = 1)
+    facet_wrap(.~facet_group, scales="free_x") +
+  theme_cowplot(font_size=10) + panel_border() +
+  theme(axis.text.x=element_blank(),
+        strip.background = element_blank(),
+        #legend.position = c(.99, 1), 
+        #legend.justification = c(1, 1),
+        #axis.text.x = element_text(angle = 45, hjust = 1,vjust = 1),
+        legend.position="bottom",
+        legend.text=element_text(size=8),
+        legend.spacing.x = unit(0.1, units = "cm"), # horizontal spacing between legends
+        legend.spacing.y = unit(0.1, units = "cm"),
+        #legend.margin=margin(t=0, r=0, b=0, l=0.1, unit="lines"),
+        axis.text = element_text(size = 8),
+        legend.key.width = unit(.3, "cm"), legend.key.height = unit(0.3, "cm")
   )
 figure
+<<<<<<< HEAD
+save_plot("tropicalCO2.png", figure, dpi=1200, nrow=1, ncol=1, base_height = 5, base_width = 6,type = "cairo-png",bg = "white")
+=======
 save_plot("tropicalCO2.png", figure, dpi=1200, nrow=1, ncol=1, base_height = 6, base_width = 6,type = "cairo-png",bg = "white")
+>>>>>>> 160869cd72dde26c7fba18ff39cc950c6dd34dae
 
 ##################### Whittaker's Biomes #############################################
 #devtools::install_github("valentinitnelav/plotbiomes")
@@ -91,7 +105,11 @@ library(plotbiomes)
 library(rcartocolor)
 make_pct <- function(x) (exp(x) - 1) * 100
 
+<<<<<<< HEAD
+effects <- read.csv("~/OneDrive - Stanford/FACEreview/data/AGB_effects2019.csv",na.strings=c("",NA)) %>%
+=======
 effects <- read.csv("~/OneDrive - LLNL/FACEreview/data/AGB_effects2019.csv",na.strings=c("",NA)) %>%
+>>>>>>> 160869cd72dde26c7fba18ff39cc950c6dd34dae
   dplyr::rename(Age=Age2, Duration=nyears, Fertilized=N) %>% mutate(Fertilized=recode_factor(Fertilized,Nhigh="Yes",Nlow="No"), new_id = paste(Site.Name,Fertilized)) %>%
   dplyr::select(new_id,Age,Duration,Fertilized,MAT,MAP2, Biome) %>% distinct() %>% mutate(X = 1:n())
 
@@ -112,7 +130,7 @@ biomes <- ggplot() + geom_polygon(data = Whittaker_biomes,aes(x = temp_c, y = pr
              stroke = 1) +
   #geom_label_repel(data=effects,aes(x = MAT, y = MAP2, label=SITE), 
   #                               colour = "red", size = 2, nudge_x=-100, nudge_y=1000) +
-  guides(fill = guide_legend(title="Ecosystem",order = 1),
+  guides(fill = guide_legend(title="Ecosystem",order = 1, nrow = 5, title.position="top"),
          color = guide_legend(order = 4),
          alpha = guide_legend(order = 3),
          size = guide_legend(order = 2)) +
@@ -120,18 +138,34 @@ biomes <- ggplot() + geom_polygon(data = Whittaker_biomes,aes(x = temp_c, y = pr
   # - set range on OX axes and adjust the distance (gap) from OY axes
   scale_x_continuous(name = expression("Temperature " ( degree*C)),expand = c(0, 0), limits = c(-16,31)) +
   #coord_fixed(ratio = 1/10) + # aspect ratio, expressed as y / x
-  theme_bw() + theme_classic(base_size = 8) + 
+  theme_cowplot(font_size=10) + 
   theme(legend.justification = c(0, 1), # pick the upper left corner of the legend box and
         legend.position = c(0, 1), # adjust the position of the corner as relative to axis
+        legend.direction="horizontal",
+        legend.title=element_text(size=8),
         legend.background = element_rect(fill = NA), # transparent legend background
-        #legend.box = "horizontal", # horizontal arrangement of multiple legends
         legend.spacing.x = unit(0.1, units = "cm"), # horizontal spacing between legends
-        legend.spacing.y = unit(0.1, units = "cm"),
+        legend.spacing.y = unit(0.2, units = "cm"),
         panel.grid = element_blank(), # eliminate grids
         legend.margin=margin(t=0, r=0, b=0, l=0.1, unit="lines"),
         legend.key.width = unit(.3, "cm"), legend.key.height = unit(0.3, "cm"),
+        axis.text = element_text(size = 8),
+        legend.text=element_text(size=8)
   )
 biomes
+<<<<<<< HEAD
+save_plot("biomes.png", biomes, dpi=1200, nrow=1, ncol=1, base_height = 4, base_width = 4,type = "cairo-png",bg="white")
+=======
 save_plot("biomes.png", biomes, dpi=1200, nrow=1, ncol=1, base_height = 4, base_width = 4,type = "cairo-png")
 
+>>>>>>> 160869cd72dde26c7fba18ff39cc950c6dd34dae
 
+combined <- plot_grid(figure + theme(plot.margin = unit(c(5,5,10,5), "points")),
+                      biomes + theme(plot.margin = unit(c(10,5,5,5), "points")),
+                        align="hv",
+                        labels = "auto",
+                        label_size = 12,
+                        hjust = -.1,
+                        vjust = 1.2,
+                        nrow = 2, ncol=1)
+save_plot("combined.png",combined, ncol=1, nrow=2, dpi= 800, base_width=5, type = "cairo-png", bg="white")
